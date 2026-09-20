@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>DENDY TENNIS</title>
+<style>
+  :root {
+    --ground: #07070b;
+    --bezel-light: #4a4a52;
+    --bezel-dark: #232327;
+    --bezel-edge: #111114;
+    --label: #8a8a92;
+    --btn-face: #22222a;
+    --btn-face-down: #3a3a46;
+    --btn-edge: #45454f;
+    --btn-text: #d9d9e2;
+    --accent: #ffe14d;
+  }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--ground);
+    color: var(--btn-text);
+    font-family: "Courier New", Courier, monospace;
+    overflow: hidden;
+    -webkit-user-select: none; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .page {
+    height: 100%;
+    box-sizing: border-box;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 10px;
+    padding-block: 8px;
+    padding-left: 16px; padding-right: 16px;
+  }
+  .brand {
+    flex: none;
+    color: var(--label);
+    font-size: 11px; letter-spacing: 4px; font-weight: bold;
+  }
+  .tv-wrap {
+    flex: 0 1 auto;
+    min-height: 0;
+    max-width: 100%;
+    position: relative;
+    display: flex;
+    padding: 16px 18px 24px;
+    border-radius: 26px;
+    background: linear-gradient(145deg, var(--bezel-light), var(--bezel-dark));
+    box-shadow:
+      0 0 0 2px var(--bezel-edge),
+      0 18px 40px rgba(0,0,0,0.6),
+      inset 0 2px 4px rgba(255,255,255,0.08),
+      inset 0 -6px 10px rgba(0,0,0,0.5);
+  }
+  .tv-wrap::before {
+    content: "";
+    position: absolute;
+    left: 22%; right: 22%; bottom: 8px; height: 8px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #1a1a1e, #38383e, #1a1a1e);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.6);
+  }
+  .screen {
+    position: relative;
+    width: 800px; height: 533px;   /* стартовый размер, дальше подгоняется под экран */
+    max-width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: inset 0 0 14px 6px rgba(0,0,0,0.85), 0 0 0 5px #0c0c0e;
+    background: #000;
+  }
+  canvas {
+    display: block;
+    width: 100%; height: 100%;
+    background: #000;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    touch-action: none;
+    outline: none;
+  }
+  .scanlines {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0) 0px,
+      rgba(0,0,0,0) 1px,
+      rgba(0,0,0,0.16) 2px,
+      rgba(0,0,0,0.16) 3px
+    );
+    mix-blend-mode: multiply;
+  }
+  .vignette {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    box-shadow: inset 0 0 90px 30px rgba(0,0,0,0.55);
+    border-radius: 12px;
+  }
+  .controls {
+    flex: none;
+    display: flex; flex-wrap: wrap;
+    justify-content: center; gap: 8px;
+  }
+  .btn {
+    min-height: 44px; min-width: 96px;
+    padding: 0 16px;
+    font-family: inherit; font-size: 13px; font-weight: bold; letter-spacing: 2px;
+    color: var(--btn-text);
+    background: var(--btn-face);
+    border: 2px solid var(--btn-edge);
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: inset 0 2px 0 rgba(255,255,255,0.07), 0 3px 0 #101014;
+  }
+  .btn:active, .btn.is-down {
+    background: var(--btn-face-down);
+    transform: translateY(2px);
+    box-shadow: inset 0 2px 0 rgba(255,255,255,0.07), 0 1px 0 #101014;
+  }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .btn-smash { color: #1a1a1e; background: var(--accent); border-color: #b99c14; }
+  .btn-smash:active, .btn-smash.is-down { background: #d8bd2e; }
+  .hint {
+    flex: none;
+    color: var(--label); font-size: 11px; letter-spacing: 1px;
+    text-align: center;
+  }
+  .rotate-hint { display: none; }
+  @media (orientation: portrait) and (max-width: 820px) {
+    .rotate-hint { display: block; color: var(--accent); }
+    .key-hint { display: none; }
+  }
+  @media (pointer: coarse) {
+    .key-hint { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="brand">DENDY&nbsp;&#9632;&nbsp;TENNIS</div>
+    <div class="tv-wrap">
+      <div class="screen" id="screen">
+        <canvas id="game" width="900" height="600" tabindex="0"></canvas>
+        <div class="scanlines"></div>
+        <div class="vignette"></div>
+      </div>
+    </div>
+    <div class="controls" id="controls">
+      <button class="btn" id="btnPause" type="button">ПАУЗА</button>
+      <button class="btn btn-smash" id="btnSmash" type="button">УДАР</button>
+      <button class="btn" id="btnQuit" type="button">ВЫЙТИ</button>
+    </div>
+    <div class="hint key-hint">СТРЕЛКИ &#8211; ДВИЖЕНИЕ &nbsp;&#9632;&nbsp; ПРОБЕЛ &#8211; УДАР &nbsp;&#9632;&nbsp; P / Q &#8211; ПАУЗА / ВЫХОД</div>
+    <div class="hint rotate-hint">&#8635;&nbsp; ПОВЕРНИ ТЕЛЕФОН ГОРИЗОНТАЛЬНО &#8211; БУДЕТ УДОБНЕЕ</div>
+  </div>
+
+<script>
+(function(){
+"use strict";
+
+// ============================================================
+//  SETUP
+// ============================================================
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+
+const VW = 900, VH = 600;   // real canvas size
+const SCALE = 3;            // gameplay virtual pixel scale
+const CW = VW / SCALE;      // 300 virtual court width
+const CH = VH / SCALE;      // 200 virtual court height
+
+// ============================================================
+//  INPUT  (arrows must control the player, never scroll the page)
+// ============================================================
+const keys = {};
+const CONTROLLED_KEYS = ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','Enter','Escape','KeyP','KeyQ'];
+window.addEventListener('keydown', function(e){
+  if (CONTROLLED_KEYS.indexOf(e.code) !== -1) {
+    e.preventDefault();
+  }
+  keys[e.code] = true;
+  unlockAudio();
+  handleMenuKey(e.code);
+}, {passive:false});
+window.addEventListener('keyup', function(e){
+  if (CONTROLLED_KEYS.indexOf(e.code) !== -1) {
+    e.preventDefault();
+  }
+  keys[e.code] = false;
+}, {passive:false});
+window.addEventListener('pointerdown', unlockAudio);
+
+// ============================================================
+//  АДАПТИВНОСТЬ: экран подгоняется под окно, сохраняя пропорции 3:2
+// ============================================================
+const screenEl = document.getElementById('screen');
+const pageEl = document.querySelector('.page');
+function fitScreen(){
+  const frameX = 40;   // горизонтальные поля рамки телевизора
+  const frameY = 44;   // вертикальные поля рамки
+  let usedH = 0;
+  for (let i=0;i<pageEl.children.length;i++){
+    const el = pageEl.children[i];
+    if (!el.classList.contains('tv-wrap')) usedH += el.offsetHeight + 10;
+  }
+  const availW = pageEl.clientWidth - 32 - frameX;
+  const availH = pageEl.clientHeight - 16 - usedH - frameY;
+  const w = Math.max(200, Math.min(availW, availH * (VW / VH)));
+  screenEl.style.width = Math.round(w) + 'px';
+  screenEl.style.height = Math.round(w * VH / VW) + 'px';
+}
+window.addEventListener('resize', fitScreen);
+window.addEventListener('orientationchange', fitScreen);
+if (window.visualViewport) window.visualViewport.addEventListener('resize', fitScreen);
+fitScreen();
+canvas.focus();
+
+// ============================================================
+//  СЕНСОРНОЕ УПРАВЛЕНИЕ (телефон/планшет) + мышь
+// ============================================================
+const pointer = { active:false, x:0, y:0 };
+
+function canvasPos(e){
+  const r = canvas.getBoundingClientRect();
+  return {
+    x: (e.clientX - r.left) * (VW / r.width),
+    y: (e.clientY - r.top)  * (VH / r.height)
+  };
+}
+function inRect(p, r){
+  return p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h;
+}
+
+canvas.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+canvas.addEventListener('pointerdown', function(e){
+  e.preventDefault();
+  canvas.focus();
+  unlockAudio();
+  const p = canvasPos(e);
+  pointer.active = true; pointer.x = p.x; pointer.y = p.y;
+  try { canvas.setPointerCapture(e.pointerId); } catch(err) {}
+  handleTap(p);
+}, {passive:false});
+canvas.addEventListener('pointermove', function(e){
+  if (!pointer.active) return;
+  e.preventDefault();
+  const p = canvasPos(e);
+  pointer.x = p.x; pointer.y = p.y;
+}, {passive:false});
+function endPointer(e){
+  pointer.active = false;
+  try { canvas.releasePointerCapture(e.pointerId); } catch(err) {}
+}
+canvas.addEventListener('pointerup', endPointer);
+canvas.addEventListener('pointercancel', endPointer);
+
+// Касание по экрану заменяет клавиши в меню
+function handleTap(p){
+  if (state === STATE.GENDER) {
+    for (let i=0;i<GENDER_PANELS.length;i++){
+      if (inRect(p, GENDER_PANELS[i])) { genderIndex = i; handleMenuKey('Enter'); return; }
+    }
+  } else if (state === STATE.SELECT_PLAYER || state === STATE.SELECT_OPPONENT) {
+    if (inRect(p, BACK_BUTTON)) { handleMenuKey('Escape'); return; }
+    const pool = state === STATE.SELECT_PLAYER ? roster : oppPool;
+    const idx = rosterCellAt(p, pool.length);
+    if (idx >= 0) {
+      if (state === STATE.SELECT_PLAYER) selPlayerIndex = idx; else selOppIndex = idx;
+      handleMenuKey('Enter');
+    }
+  } else if (state === STATE.PAUSED) {
+    handleMenuKey(inRect(p, PAUSE_QUIT_BUTTON) ? 'KeyQ' : 'KeyP');
+  } else if (state === STATE.GAMEOVER) {
+    handleMenuKey('Enter');
+  }
+}
+
+// ---- экранные кнопки (нужны на телефоне, где нет клавиатуры) ----
+document.getElementById('btnPause').addEventListener('click', function(){
+  unlockAudio();
+  handleMenuKey('KeyP');
+});
+document.getElementById('btnQuit').addEventListener('click', function(){
+  unlockAudio();
+  handleMenuKey(state === STATE.PLAYING || state === STATE.PAUSED ? 'KeyQ' : 'Escape');
+});
+const smashBtn = document.getElementById('btnSmash');
+function smashDown(e){ e.preventDefault(); unlockAudio(); keys['Space'] = true; smashBtn.classList.add('is-down'); }
+function smashUp(){ keys['Space'] = false; smashBtn.classList.remove('is-down'); }
+smashBtn.addEventListener('pointerdown', smashDown, {passive:false});
+smashBtn.addEventListener('pointerup', smashUp);
+smashBtn.addEventListener('pointercancel', smashUp);
+smashBtn.addEventListener('pointerleave', smashUp);
+
+// ============================================================
+//  AUDIO (WebAudio synth, no external files, offline)
+// ============================================================
+let audioCtx = null;
+function unlockAudio(){
+  try{
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }catch(e){}
+}
+function playTone(freq, dur, type, vol, delay, sweepTo){
+  if (!audioCtx) return;
+  type = type || 'square'; vol = vol===undefined?0.18:vol; delay = delay||0;
+  try{
+    const t0 = audioCtx.currentTime + delay;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t0);
+    if (sweepTo) osc.frequency.exponentialRampToValueAtTime(sweepTo, t0 + dur);
+    gain.gain.setValueAtTime(vol, t0);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.03);
+  }catch(e){}
+}
+function playHitSound(power){
+  playTone(190 + Math.random()*90, 0.06, 'square', power ? 0.26 : 0.16);
+  if (power) playTone(420, 0.05, 'triangle', 0.14, 0.02);
+}
+function playBounceSound(){
+  playTone(110 + Math.random()*30, 0.05, 'triangle', 0.10);
+}
+function playFaultSound(){
+  playTone(220, 0.28, 'sawtooth', 0.16, 0, 70);
+}
+function playComeOnJingle(){
+  playTone(523, 0.08, 'square', 0.10, 0.00);
+  playTone(659, 0.08, 'square', 0.10, 0.08);
+  playTone(784, 0.13, 'square', 0.11, 0.16);
+}
+function playGameWonJingle(){
+  [523,659,784,1046].forEach(function(f,i){ playTone(f,0.12,'square',0.11,i*0.10); });
+}
+function playFireworkSound(){
+  playTone(900 + Math.random()*500, 0.10, 'square', 0.09, 0, 120);
+  playTone(220, 0.24, 'sawtooth', 0.06, 0.02, 60);
+}
+function playMenuBlip(){ playTone(440, 0.04, 'square', 0.12); }
+function playMenuConfirm(){
+  playTone(660, 0.06, 'square', 0.18, 0);
+  playTone(880, 0.10, 'square', 0.18, 0.06);
+}
+
+// ---- speech: reactions voiced with a voice matching the chosen player's gender ----
+// "Приколюшные" системные голоса (роботы/шёпот/эффекты) — никогда не выбираем такие,
+// даже если под них не нашлось явной пары по полу.
+const NOVELTY_VOICE_BLOCKLIST = ['albert','bad news','bahh','bells','boing','bubbles','cellos',
+  'deranged','good news','hysterical','jester','junior','kathy','organ','pipe organ','ralph',
+  'superstar','trinoids','whisper','zarvox','wobble'];
+function isNoveltyVoice(name){
+  const n = (name || '').toLowerCase();
+  return NOVELTY_VOICE_BLOCKLIST.some(function(b){ return n.indexOf(b) !== -1; });
+}
+const MALE_VOICE_HINTS = ['daniel','alex','fred','tom','oliver','arthur','george','aaron',
+  'gordon','lee','bruce','david','guy','ryan','mark','male'];
+const FEMALE_VOICE_HINTS = ['samantha','victoria','karen','moira','tessa','fiona','serena',
+  'allison','ava','susan','zoe','kate','nicky','martha','catherine',
+  'zira','hazel','eva','aria','jenny','female'];
+
+function getVoices(){
+  try { return window.speechSynthesis.getVoices() || []; } catch(e){ return []; }
+}
+if ('speechSynthesis' in window) {
+  try{
+    getVoices();
+    window.speechSynthesis.onvoiceschanged = getVoices;
+  }catch(e){}
+}
+function pickVoice(gender){
+  const voices = getVoices();
+  if (!voices.length) return null;
+  const clean = voices.filter(function(v){ return !isNoveltyVoice(v.name); });
+  const base = clean.length ? clean : voices;
+  const en = base.filter(function(v){ return /^en/i.test(v.lang || ''); });
+  const pool = en.length ? en : base;
+  const hints = gender === 'm' ? MALE_VOICE_HINTS : FEMALE_VOICE_HINTS;
+  for (let i=0;i<hints.length;i++){
+    for (let k=0;k<pool.length;k++){
+      if ((pool[k].name || '').toLowerCase().indexOf(hints[i]) !== -1) return pool[k];
+    }
+  }
+  return pool[0] || null;
+}
+function cancelSpeech(){
+  try{ if ('speechSynthesis' in window) window.speechSynthesis.cancel(); }catch(e){}
+}
+function speakLine(text, gender){
+  try{
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    const v = pickVoice(gender);
+    if (v) { u.voice = v; u.lang = v.lang || 'en-US'; } else { u.lang = 'en-US'; }
+    // умеренный контраст без искажений: мужской чуть ниже и медленнее,
+    // женский чуть выше и живее — без экстремальных значений pitch,
+    // которые на некоторых движках звучат "шипяще"
+    u.rate  = gender === 'm' ? 0.92 : 1.06;
+    u.pitch = gender === 'm' ? 0.78 : 1.25;
+    u.volume = 1;
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+// ============================================================
+//  CHARACTERS  (stylised pixel likeness, not photos)
+// ============================================================
+const CHARACTERS = [
+  // ---- women ----
+  { name:"A. SABALENKA", gender:'f', skin:'#e7b48d', hair:'#f0d370', hairStyle:'pony',  outfit:'#2c6df0', trim:'#ffffff', headband:false },
+  { name:"M. SHARAPOVA", gender:'f', skin:'#f6d3ba', hair:'#f3d95a', hairStyle:'long',  outfit:'#ff6fa8', trim:'#ffffff', headband:false },
+  { name:"S. WILLIAMS",  gender:'f', skin:'#6b3d21', hair:'#161616', hairStyle:'pony',  outfit:'#141414', trim:'#d8af3d', headband:false },
+  { name:"COCO GAUFF",   gender:'f', skin:'#7c4a28', hair:'#161616', hairStyle:'puff',  outfit:'#ff7c2a', trim:'#ffffff', headband:false },
+  { name:"N. OSAKA",     gender:'f', skin:'#caa06e', hair:'#161616', hairStyle:'long',  outfit:'#d21f3c', trim:'#ffffff', headband:false },
+  { name:"E. RYBAKINA",  gender:'f', skin:'#f0c9a0', hair:'#4a2e1a', hairStyle:'pony',  outfit:'#ffd400', trim:'#00a1de', headband:false },
+  // ---- men ----
+  { name:"J. SINNER",    gender:'m', skin:'#f0c9a0', hair:'#d9642a', hairStyle:'short', outfit:'#1f6fd6', trim:'#ff8a2a', headband:false },
+  { name:"C. ALCARAZ",   gender:'m', skin:'#d9a066', hair:'#2e1b0e', hairStyle:'short', outfit:'#d21f3c', trim:'#ffd400', headband:false },
+  { name:"A. BUBLIK",    gender:'m', skin:'#f0c9a0', hair:'#e8d99a', hairStyle:'tall',  outfit:'#00b8d4', trim:'#ffd400', headband:false },
+  { name:"N. DJOKOVIC",  gender:'m', skin:'#f0c9a0', hair:'#241a10', hairStyle:'short', outfit:'#ffffff', trim:'#1f6fd6', headband:false },
+  { name:"R. FEDERER",   gender:'m', skin:'#e7b48d', hair:'#3a2a1e', hairStyle:'short', outfit:'#145a32', trim:'#ffffff', headband:false },
+  { name:"R. NADAL",     gender:'m', skin:'#caa06e', hair:'#161616', hairStyle:'short', outfit:'#ffd400', trim:'#ff7c2a', headband:true  }
+];
+
+// ============================================================
+//  PIXEL SPRITE DRAWING (built from rectangles, no images)
+// ============================================================
+function rect(ctx,x,y,w,h,color){
+  ctx.fillStyle = color;
+  ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+}
+
+function drawTrophy(g, cx, bottomY, u){
+  const gold = '#ffd400', dark = '#c08a00', light = '#fff6b0';
+  rect(g, cx - u*2.6, bottomY - u*1.2, u*5.2, u*1.2, dark);      // основание
+  rect(g, cx - u*1.8, bottomY - u*2.2, u*3.6, u*1.0, gold);      // ступень
+  rect(g, cx - u*0.7, bottomY - u*3.9, u*1.4, u*1.7, dark);      // ножка
+  rect(g, cx - u*1.3, bottomY - u*4.7, u*2.6, u*0.8, gold);      // сужение чаши
+  rect(g, cx - u*2.0, bottomY - u*5.9, u*4.0, u*1.2, gold);
+  rect(g, cx - u*2.6, bottomY - u*7.5, u*5.2, u*1.6, gold);
+  rect(g, cx - u*3.0, bottomY - u*8.4, u*6.0, u*0.9, light);     // кромка
+  rect(g, cx - u*4.0, bottomY - u*7.4, u*1.0, u*2.4, gold);      // ручки
+  rect(g, cx + u*3.0, bottomY - u*7.4, u*1.0, u*2.4, gold);
+  rect(g, cx - u*1.8, bottomY - u*7.2, u*0.8, u*2.2, light);     // блик
+}
+
+// Draws a humanoid tennis-player sprite centred on (x, groundY), feet at groundY.
+// u = size of one "pixel" unit in real px. animPhase 0/1 = running legs. swing 0..1 = racket swing progress.
+function drawCharacter(ctx, char, x, groundY, u, animPhase, swing, mirrored, holdTrophy){
+  const s = mirrored ? -1 : 1;
+  const legOff = animPhase ? u : 0;
+  // shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.beginPath();
+  ctx.ellipse(x, groundY + u*0.4, u*3.2, u*1.1, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  const top = groundY - u*15; // head top reference
+
+  // legs
+  rect(ctx, x - u*2.5, groundY - u*4 - legOff*0.3, u*2, u*4, '#1b1b1b');
+  rect(ctx, x + u*0.5, groundY - u*4 + legOff*0.3, u*2, u*4, '#1b1b1b');
+  rect(ctx, x - u*2.5, groundY - u*4.6 - legOff*0.3, u*2, u*1.4, char.skin === '#161616' ? '#222' : '#ffffff');
+  rect(ctx, x + u*0.5, groundY - u*4.6 + legOff*0.3, u*2, u*1.4, char.skin === '#161616' ? '#222' : '#ffffff');
+
+  // torso (outfit)
+  rect(ctx, x - u*3, groundY - u*10.5, u*6, u*6.2, char.outfit);
+  rect(ctx, x - u*3, groundY - u*10.5, u*6, u*1.4, char.trim);
+
+  // arms
+  if (holdTrophy) {
+    // обе руки подняты — держат кубок над головой
+    rect(ctx, x - u*4.2, groundY - u*14.5, u*1.5, u*5.6, char.skin);
+    rect(ctx, x + u*2.7, groundY - u*14.5, u*1.5, u*5.6, char.skin);
+  } else {
+    const armSwing = swing || 0;
+    // off-hand arm
+    rect(ctx, x - u*4.6, groundY - u*10, u*1.6, u*4.4, char.skin);
+    // racket arm (animates outward/up when swinging)
+    const rax = x + u*(3.6 + armSwing*3.2*s);
+    const ray = groundY - u*(9.6 + armSwing*4.5);
+    rect(ctx, x + u*3, groundY - u*10, u*1.6, u*3.6 - armSwing*u*1.5, char.skin);
+    // racket
+    rect(ctx, rax - u*0.3, ray - u*3.2, u*0.9, u*3.6, '#c8c8c8');
+    ctx.fillStyle = '#e2e2e2';
+    ctx.beginPath();
+    ctx.ellipse(rax + u*0.15, ray - u*4.6, u*1.7, u*2.1, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = '#8a8a8a';
+    ctx.lineWidth = Math.max(1, u*0.25);
+    ctx.stroke();
+  }
+
+  // head
+  rect(ctx, x - u*2, top, u*4, u*4.2, char.skin);
+
+  // hair styles
+  ctx.fillStyle = char.hair;
+  if (char.hairStyle === 'short') {
+    rect(ctx, x - u*2.1, top - u*0.6, u*4.2, u*1.6, char.hair);
+  } else if (char.hairStyle === 'tall') {
+    rect(ctx, x - u*2.1, top - u*1.6, u*4.2, u*2.6, char.hair);
+  } else if (char.hairStyle === 'long') {
+    rect(ctx, x - u*2.1, top - u*0.6, u*4.2, u*1.6, char.hair);
+    rect(ctx, x - u*2.3, top + u*0.6, u*1.3, u*5.5, char.hair);
+    rect(ctx, x + u*1.0, top + u*0.6, u*1.3, u*5.5, char.hair);
+  } else if (char.hairStyle === 'pony') {
+    rect(ctx, x - u*2.1, top - u*0.6, u*4.2, u*1.6, char.hair);
+    rect(ctx, x + u*1.8*s, top - u*0.2, u*1.3, u*4.2, char.hair);
+  } else if (char.hairStyle === 'puff') {
+    ctx.beginPath();
+    ctx.ellipse(x, top - u*0.4, u*2.6, u*2.1, 0, 0, Math.PI*2);
+    ctx.fill();
+  }
+  if (char.headband) {
+    rect(ctx, x - u*2.1, top + u*0.6, u*4.2, u*1.0, '#e21f3c');
+  }
+  // face hint (eyes)
+  rect(ctx, x - u*1.1, top + u*2.0, u*0.7, u*0.7, '#231b12');
+  rect(ctx, x + u*0.4, top + u*2.0, u*0.7, u*0.7, '#231b12');
+
+  if (holdTrophy) drawTrophy(ctx, x, top - u*1.0, u*0.95);
+}
+
+// ============================================================
+//  GAME STATE
+// ============================================================
+const STATE = { GENDER:'gender', SELECT_PLAYER:'selectPlayer', SELECT_OPPONENT:'selectOpponent',
+                REVEAL:'reveal', COUNTDOWN:'countdown', PLAYING:'playing', PAUSED:'paused',
+                POINT:'point', GAMEOVER:'gameover' };
+let state = STATE.GENDER;
+let stateTimer = 0;
+
+let genderIndex = 0;          // 0 = женщины, 1 = мужчины
+let chosenGender = 'f';
+let roster = [];              // персонажи выбранного пола
+let oppPool = [];             // соперники (тот же пол, без твоего игрока)
+let selPlayerIndex = 0;
+let selOppIndex = 0;
+let playerChar = null, cpuChar = null;
+
+const player = { x: CW/2, y: CH-14, w:0, speed:95, swing:0, anim:0 };
+const cpu    = { x: CW/2, y: 16,    speed:70, swing:0, anim:0, skill:0.82 };
+
+const ball = { x: CW/2, y: CH/2, z: 0, vx:0, vy:0, vz:0, bounces:0, lastHitter:null, inPlay:false };
+const GRAVITY = -620;
+const NET_Y = CH/2;
+
+let score = { player:0, cpu:0, playerGames:0, cpuGames:0, server:'player' };
+let lastPointWinner = null;
+let pointMessage = "";
+let matchWinner = null;
+
+// ---- салют на экране победы ----
+const fireworks = [];
+let fireworkTimer = 0;
+const FIREWORK_COLORS = ['#ffe14d','#ff6fa8','#7fd9ff','#7fffb0','#ff8f3f','#ffffff'];
+function spawnFirework(){
+  const fx = 120 + Math.random()*(VW-240);
+  const fy = 70 + Math.random()*200;
+  const color = FIREWORK_COLORS[Math.floor(Math.random()*FIREWORK_COLORS.length)];
+  for (let i=0;i<28;i++){
+    const a = (Math.PI*2*i)/28 + Math.random()*0.2;
+    const sp = 70 + Math.random()*130;
+    fireworks.push({ x:fx, y:fy, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp,
+                     life:1, color:color, size: 3 + Math.floor(Math.random()*3) });
+  }
+  playFireworkSound();
+}
+function updateFireworks(dt){
+  for (let i=fireworks.length-1;i>=0;i--){
+    const p = fireworks[i];
+    p.x += p.vx*dt; p.y += p.vy*dt; p.vy += 150*dt;
+    p.life -= dt*0.75;
+    if (p.life <= 0) fireworks.splice(i,1);
+  }
+}
+function drawFireworks(g){
+  for (let i=0;i<fireworks.length;i++){
+    const p = fireworks[i];
+    g.globalAlpha = Math.max(0, Math.min(1, p.life));
+    g.fillStyle = p.color;
+    g.fillRect(Math.round(p.x), Math.round(p.y), p.size, p.size);
+  }
+  g.globalAlpha = 1;
+}
+
+// ---- раскладка экранов (общая для отрисовки и для попадания пальцем) ----
+const GENDER_PANELS = [
+  { label:'ЖЕНЩИНЫ', gender:'f', x:70,  y:140, w:360, h:300 },
+  { label:'МУЖЧИНЫ', gender:'m', x:470, y:140, w:360, h:300 }
+];
+const ROSTER_LAYOUT = { startX:56, startY:104, cellW:252, cellH:185, gapX:16, gapY:16 };
+const BACK_BUTTON = { x:16, y:14, w:120, h:40 };
+const PAUSE_RESUME_BUTTON = { x:VW/2-160, y:VH/2-6, w:320, h:44 };
+const PAUSE_QUIT_BUTTON   = { x:VW/2-160, y:VH/2+48, w:320, h:44 };
+
+function rosterCellRect(i){
+  const L = ROSTER_LAYOUT;
+  return {
+    x: L.startX + (i % GRID_COLS)*(L.cellW + L.gapX),
+    y: L.startY + Math.floor(i / GRID_COLS)*(L.cellH + L.gapY),
+    w: L.cellW, h: L.cellH
+  };
+}
+function rosterCellAt(p, count){
+  for (let i=0;i<count;i++){
+    if (inRect(p, rosterCellRect(i))) return i;
+  }
+  return -1;
+}
+
+// ---- menu navigation ----
+const GRID_COLS = 3;
+function wrapIndex(idx, len){ return ((idx % len) + len) % len; }
+function moveInGrid(idx, len, code){
+  if (code === 'ArrowRight') { playMenuBlip(); return wrapIndex(idx + 1, len); }
+  if (code === 'ArrowLeft')  { playMenuBlip(); return wrapIndex(idx - 1, len); }
+  if (code === 'ArrowDown')  { playMenuBlip(); return wrapIndex(idx + GRID_COLS, len); }
+  if (code === 'ArrowUp')    { playMenuBlip(); return wrapIndex(idx - GRID_COLS, len); }
+  return idx;
+}
+
+function handleMenuKey(code){
+  if (state === STATE.GENDER) {
+    if (code === 'ArrowLeft' || code === 'ArrowRight') {
+      genderIndex = 1 - genderIndex;
+      playMenuBlip();
+    } else if (code === 'Enter' || code === 'Space') {
+      chosenGender = genderIndex === 0 ? 'f' : 'm';
+      roster = CHARACTERS.filter(function(c){ return c.gender === chosenGender; });
+      selPlayerIndex = 0;
+      state = STATE.SELECT_PLAYER;
+      playMenuConfirm();
+    }
+  } else if (state === STATE.SELECT_PLAYER) {
+    selPlayerIndex = moveInGrid(selPlayerIndex, roster.length, code);
+    if (code === 'Enter' || code === 'Space') {
+      playerChar = roster[selPlayerIndex];
+      oppPool = roster.filter(function(c){ return c !== playerChar; });
+      selOppIndex = 0;
+      state = STATE.SELECT_OPPONENT;
+      playMenuConfirm();
+    } else if (code === 'Escape') {
+      state = STATE.GENDER;
+      playMenuBlip();
+    }
+  } else if (state === STATE.SELECT_OPPONENT) {
+    selOppIndex = moveInGrid(selOppIndex, oppPool.length, code);
+    if (code === 'Enter' || code === 'Space') {
+      cpuChar = oppPool[selOppIndex];
+      playMenuConfirm();
+      startReveal();
+    } else if (code === 'Escape') {
+      state = STATE.SELECT_PLAYER;
+      playMenuBlip();
+    }
+  } else if (state === STATE.PLAYING) {
+    if (code === 'Escape' || code === 'KeyP') {
+      state = STATE.PAUSED;
+      stateTimer = 0;
+      playMenuBlip();
+    } else if (code === 'KeyQ') {
+      quitToMenu();
+    }
+  } else if (state === STATE.PAUSED) {
+    if (code === 'Escape' || code === 'KeyP') {
+      state = STATE.PLAYING;
+      playMenuBlip();
+    } else if (code === 'KeyQ') {
+      quitToMenu();
+    }
+  } else if (state === STATE.GAMEOVER) {
+    if (code === 'Enter' || code === 'Space') {
+      cancelSpeech();
+      state = STATE.GENDER;
+      playMenuBlip();
+    }
+  }
+}
+
+function quitToMenu(){
+  cancelSpeech();
+  ball.inPlay = false;
+  state = STATE.GENDER;
+  stateTimer = 0;
+  playMenuBlip();
+}
+
+function startReveal(){
+  state = STATE.REVEAL;
+  stateTimer = 0;
+}
+
+function startCountdown(){
+  state = STATE.COUNTDOWN;
+  stateTimer = 0;
+}
+
+function resetMatch(){
+  score = { player:0, cpu:0, playerGames:0, cpuGames:0, server:'player' };
+  matchWinner = null;
+  resetPositions();
+}
+
+function resetPositions(){
+  player.x = CW/2; player.y = CH - 14;
+  cpu.x = CW/2; cpu.y = 16;
+}
+
+function serveBall(){
+  const serverIsPlayer = score.server === 'player';
+  ball.x = serverIsPlayer ? player.x : cpu.x;
+  ball.y = serverIsPlayer ? player.y - 4 : cpu.y + 4;
+  ball.z = 6;
+  const targetX = 30 + Math.random() * (CW - 60);
+  const targetY = serverIsPlayer ? 20 : CH - 20;
+  const t = 0.85;
+  ball.vx = (targetX - ball.x) / t;
+  ball.vy = (targetY - ball.y) / t;
+  ball.vz = 165;
+  ball.bounces = 0;
+  ball.lastHitter = serverIsPlayer ? 'player' : 'cpu';
+  ball.inPlay = true;
+}
+
+// ============================================================
+//  SCORING
+// ============================================================
+const POINT_NAMES = ['0','15','30','40'];
+function scoreLabel(p, o){
+  if (p >= 3 && o >= 3) {
+    if (p === o) return 'DEUCE';
+    if (p > o) return 'AD-IN';
+    return 'AD-OUT';
+  }
+  return POINT_NAMES[Math.min(p,3)];
+}
+
+function awardPoint(winner){
+  lastPointWinner = winner;
+  ball.inPlay = false;
+  if (winner === 'player') {
+    score.player++;
+    pointMessage = "COME ON!";
+    playComeOnJingle();
+    speakLine('Come on!', playerChar.gender);
+  } else {
+    score.cpu++;
+    pointMessage = "OH NO!";
+    playFaultSound();
+    speakLine('Oh no!', playerChar.gender);
+  }
+  // check game win
+  const p = score.player, o = score.cpu;
+  if ((p >= 4 && p - o >= 2) || (o >= 4 && o - p >= 2)) {
+    const gameWinner = p > o ? 'player' : 'cpu';
+    if (gameWinner === 'player') score.playerGames++; else score.cpuGames++;
+    score.player = 0; score.cpu = 0;
+    score.server = score.server === 'player' ? 'cpu' : 'player';
+    playGameWonJingle();
+    if (score.playerGames >= 3 || score.cpuGames >= 3) {
+      matchWinner = score.playerGames >= 3 ? 'player' : 'cpu';
+    }
+  }
+  state = STATE.POINT;
+  stateTimer = 0;
+}
+
+function enterGameOver(){
+  state = STATE.GAMEOVER;
+  stateTimer = 0;
+  fireworks.length = 0;
+  fireworkTimer = 0;
+  if (matchWinner === 'player') {
+    [659,784,988,1318].forEach(function(f,i){ playTone(f,0.16,'square',0.12,i*0.12); });
+    speakLine('You made it!', playerChar.gender);
+  } else {
+    [392,330,262].forEach(function(f,i){ playTone(f,0.22,'triangle',0.12,i*0.18); });
+    speakLine('Next time, buddy!', playerChar.gender);
+  }
+}
+
+// ============================================================
+//  UPDATE
+// ============================================================
+function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+function update(dt){
+  if (state === STATE.REVEAL) {
+    stateTimer += dt;
+    if (stateTimer > 1.6) startCountdown();
+  } else if (state === STATE.COUNTDOWN) {
+    stateTimer += dt;
+    if (stateTimer > 2.2) {
+      resetMatch();
+      state = STATE.PLAYING;
+      serveBall();
+    }
+  } else if (state === STATE.PLAYING) {
+    updatePlaying(dt);
+  } else if (state === STATE.PAUSED) {
+    stateTimer += dt; // только для мигания надписи "PAUSE"
+  } else if (state === STATE.GAMEOVER) {
+    stateTimer += dt;
+    updateFireworks(dt);
+    if (matchWinner === 'player') {
+      fireworkTimer -= dt;
+      if (fireworkTimer <= 0) {
+        spawnFirework();
+        fireworkTimer = 0.45 + Math.random()*0.45;
+      }
+    }
+  } else if (state === STATE.POINT) {
+    stateTimer += dt;
+    if (stateTimer > (matchWinner ? 1.9 : 1.1)) {
+      if (matchWinner) {
+        enterGameOver();
+      } else {
+        resetPositions();
+        state = STATE.PLAYING;
+        serveBall();
+      }
+    }
+  }
+}
+
+function updatePlaying(dt){
+  // player movement
+  let dx = 0, dy = 0;
+  if (keys['ArrowLeft']) dx -= 1;
+  if (keys['ArrowRight']) dx += 1;
+  if (keys['ArrowUp']) dy -= 1;
+  if (keys['ArrowDown']) dy += 1;
+  if (dx || dy) {
+    const len = Math.sqrt(dx*dx + dy*dy);
+    player.x += (dx/len) * player.speed * dt;
+    player.y += (dy/len) * player.speed * dt;
+    player.anim = (player.anim + dt*10) % 2;
+  } else if (pointer.active) {
+    // палец/мышь: игрок бежит к точке касания с той же скоростью
+    const tx = clamp(pointer.x / SCALE, 12, CW - 12);
+    const ty = clamp(pointer.y / SCALE, NET_Y + 8, CH - 6);
+    const pdx = tx - player.x, pdy = ty - player.y;
+    const dist = Math.hypot(pdx, pdy);
+    if (dist > 1) {
+      const step = Math.min(dist, player.speed * dt);
+      player.x += pdx / dist * step;
+      player.y += pdy / dist * step;
+      player.anim = (player.anim + dt*10) % 2;
+    }
+  }
+  player.x = clamp(player.x, 12, CW - 12);
+  player.y = clamp(player.y, NET_Y + 8, CH - 6);
+
+  if (player.swing > 0) player.swing = Math.max(0, player.swing - dt*4);
+  if (cpu.swing > 0) cpu.swing = Math.max(0, cpu.swing - dt*4);
+
+  // cpu AI
+  const targetX = clamp(ball.x + (Math.random()-0.5)*10*(1-cpu.skill)*8, 14, CW-14);
+  const cdx = targetX - cpu.x;
+  if (Math.abs(cdx) > 1) {
+    cpu.x += Math.sign(cdx) * Math.min(Math.abs(cdx), cpu.speed*dt);
+    cpu.anim = (cpu.anim + dt*10) % 2;
+  }
+  cpu.y = clamp(cpu.y + ((ball.y < NET_Y ? ball.y - 10 : 16) - cpu.y) * dt * 1.5, 6, NET_Y - 8);
+
+  if (!ball.inPlay) return;
+
+  // ball physics
+  ball.x += ball.vx * dt;
+  ball.y += ball.vy * dt;
+  ball.z += ball.vz * dt;
+  ball.vz += GRAVITY * dt;
+
+  if (ball.z <= 0) {
+    ball.z = 0;
+    ball.bounces++;
+    playBounceSound();
+    if (ball.bounces >= 2) {
+      const faultSide = ball.y < NET_Y ? 'cpu' : 'player';
+      awardPoint(faultSide === 'player' ? 'cpu' : 'player');
+      return;
+    }
+    ball.vz = Math.abs(ball.vz) * 0.55;
+  }
+
+  // out of bounds -> fault by last hitter
+  if (ball.x < -4 || ball.x > CW + 4 || ball.y < -6 || ball.y > CH + 6) {
+    awardPoint(ball.lastHitter === 'player' ? 'cpu' : 'player');
+    return;
+  }
+
+  // player hit
+  if (ball.lastHitter !== 'player' && ball.y > NET_Y && ball.z < 34) {
+    const d = Math.hypot(ball.x - player.x, ball.y - player.y);
+    if (d < 15) hitBall('player');
+  }
+  // cpu hit
+  if (ball.lastHitter !== 'cpu' && ball.y < NET_Y && ball.z < 34) {
+    const d = Math.hypot(ball.x - cpu.x, ball.y - cpu.y);
+    if (d < 15) hitBall('cpu');
+  }
+}
+
+function hitBall(who){
+  const hitter = who === 'player' ? player : cpu;
+  const power = who === 'player' && keys['Space'];
+  const opponentY = who === 'player' ? 14 : CH - 14;
+  let targetX;
+  if (who === 'player') {
+    targetX = clamp(cpu.x + (Math.random()-0.5)*2 - (player.x - CW/2)*0.4, 20, CW-20);
+  } else {
+    targetX = clamp(player.x + (Math.random()<cpu.skill ? (Math.random()-0.5)*40 : (Math.random()-0.5)*140), 16, CW-16);
+  }
+  const t = 0.7 + Math.random()*0.15;
+  ball.vx = (targetX - ball.x) / t;
+  ball.vy = (opponentY - ball.y) / t;
+  ball.vz = power ? 235 : 175;
+  ball.bounces = 0;
+  ball.lastHitter = who;
+  hitter.swing = 1;
+  playHitSound(power);
+}
+
+// ============================================================
+//  RENDER
+// ============================================================
+function drawCourt(g){
+  g.fillStyle = '#0b6b3a';
+  g.fillRect(0, 0, CW, CH);
+  g.fillStyle = '#0e7d43';
+  g.fillRect(8, 8, CW-16, CH-16);
+
+  g.strokeStyle = '#f2f2f2';
+  g.lineWidth = 1;
+  g.strokeRect(14, 12, CW-28, CH-24);
+  g.beginPath();
+  g.moveTo(14, CH/2); g.lineTo(CW-14, CH/2);
+  g.moveTo(CW/2, 12); g.lineTo(CW/2, CH-12);
+  g.stroke();
+  g.strokeRect(14, 44, CW-28, CH-88);
+
+  // net
+  g.fillStyle = '#dcdcdc';
+  for (let x = 14; x < CW-14; x += 4) g.fillRect(x, NET_Y-1.5, 2, 3);
+  g.fillStyle = '#c8c8c8';
+  g.fillRect(12, NET_Y-3, 3, 6);
+  g.fillRect(CW-15, NET_Y-3, 3, 6);
+}
+
+function drawBall(g){
+  if (!ball.inPlay && state !== STATE.PLAYING) return;
+  // shadow
+  g.fillStyle = 'rgba(0,0,0,0.4)';
+  g.beginPath();
+  g.ellipse(ball.x, ball.y, 2.4, 1.1, 0, 0, Math.PI*2);
+  g.fill();
+  // ball
+  g.fillStyle = '#e8e845';
+  g.beginPath();
+  g.arc(ball.x, ball.y - ball.z, 2.1, 0, Math.PI*2);
+  g.fill();
+}
+
+function drawHUD(g){
+  g.font = 'bold 20px "Courier New", monospace';
+  g.textAlign = 'left';
+  g.fillStyle = '#ffffff';
+  g.fillText(playerChar.name + '  ' + score.playerGames, 20, 34);
+  g.fillText(scoreLabel(score.player, score.cpu), 20, 60);
+  g.textAlign = 'right';
+  g.fillText(score.cpuGames + '  ' + cpuChar.name, VW-20, 34);
+  g.fillText(scoreLabel(score.cpu, score.player), VW-20, 60);
+  g.textAlign = 'center';
+  g.font = '11px "Courier New", monospace';
+  g.fillStyle = 'rgba(255,255,255,0.55)';
+  g.fillText('ВЕДИ ПАЛЬЦЕМ ПО КОРТУ ИЛИ ЖМИ СТРЕЛКИ', VW/2, VH-10);
+}
+
+function drawTitle(g, text, y, size, color){
+  g.font = 'bold ' + size + 'px "Courier New", monospace';
+  g.textAlign = 'center';
+  g.fillStyle = '#000';
+  g.fillText(text, VW/2+3, y+3);
+  g.fillStyle = color || '#ffe14d';
+  g.fillText(text, VW/2, y);
+}
+
+function drawButton(g, r, label, size){
+  g.fillStyle = '#1f5c38';
+  g.fillRect(r.x, r.y, r.w, r.h);
+  g.strokeStyle = '#ffe14d';
+  g.lineWidth = 2;
+  g.strokeRect(r.x+1, r.y+1, r.w-2, r.h-2);
+  g.font = 'bold ' + size + 'px "Courier New", monospace';
+  g.fillStyle = '#ffe14d';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.fillText(label, r.x + r.w/2, r.y + r.h/2 + 1);
+  g.textBaseline = 'alphabetic';
+}
+
+function drawGenderScreen(g){
+  g.fillStyle = '#102a1a';
+  g.fillRect(0,0,VW,VH);
+  drawTitle(g, 'TENNIS', 62, 48, '#ffe14d');
+  g.font = '15px "Courier New", monospace';
+  g.textAlign = 'center';
+  g.fillStyle = '#c9e8d4';
+  g.fillText('ВЫБЕРИ ТУРНИР', VW/2, 96);
+
+  const frame = Math.floor(performance.now()/300)%2;
+
+  for (let i=0;i<GENDER_PANELS.length;i++){
+    const p = GENDER_PANELS[i];
+    const sel = genderIndex === i;
+    g.fillStyle = sel ? '#1f5c38' : '#163825';
+    g.fillRect(p.x, p.y, p.w, p.h);
+    g.strokeStyle = sel ? '#ffe14d' : '#0a2416';
+    g.lineWidth = sel ? 4 : 1;
+    g.strokeRect(p.x+2, p.y+2, p.w-4, p.h-4);
+
+    const list = CHARACTERS.filter(function(c){ return c.gender === p.gender; });
+    for (let k=0;k<3;k++){
+      drawCharacter(g, list[k], p.x + 90 + k*90, p.y + 232, 5, frame, 0, k===2);
+    }
+    g.font = 'bold 26px "Courier New", monospace';
+    g.fillStyle = sel ? '#ffe14d' : '#e8f2ec';
+    g.textAlign = 'center';
+    g.fillText(p.label, p.x + p.w/2, p.y + 278);
+  }
+
+  g.font = '15px "Courier New", monospace';
+  g.fillStyle = '#9dc9ae';
+  g.fillText('НАЖМИ НА ТУРНИР  ИЛИ  ← →  +  ENTER', VW/2, 496);
+  g.fillText('В ИГРЕ: ВЕДИ ПАЛЬЦЕМ ПО КОРТУ ИЛИ ЖМИ СТРЕЛКИ', VW/2, 534);
+}
+
+function drawRosterScreen(g, pool, idx, heading, note){
+  g.fillStyle = '#102a1a';
+  g.fillRect(0,0,VW,VH);
+  drawTitle(g, heading, 50, 38, '#ffe14d');
+  g.font = '14px "Courier New", monospace';
+  g.fillStyle = '#c9e8d4';
+  g.textAlign = 'center';
+  g.fillText(note, VW/2, 80);
+
+  const frame = Math.floor(performance.now()/300)%2;
+
+  for (let i=0;i<pool.length;i++){
+    const c = pool[i];
+    const cell = rosterCellRect(i);
+    const selected = i === idx;
+
+    g.fillStyle = selected ? '#1f5c38' : '#163825';
+    g.fillRect(cell.x, cell.y, cell.w, cell.h);
+    g.strokeStyle = selected ? '#ffe14d' : '#0a2416';
+    g.lineWidth = selected ? 4 : 1;
+    g.strokeRect(cell.x+2, cell.y+2, cell.w-4, cell.h-4);
+
+    drawCharacter(g, c, cell.x+cell.w/2, cell.y+cell.h-40, 5.4, frame, 0, false);
+
+    g.font = 'bold 15px "Courier New", monospace';
+    g.fillStyle = selected ? '#ffe14d' : '#e8f2ec';
+    g.textAlign = 'center';
+    g.fillText(c.name, cell.x+cell.w/2, cell.y+cell.h-14);
+  }
+
+  drawButton(g, BACK_BUTTON, '◀ НАЗАД', 14);
+
+  g.font = '14px "Courier New", monospace';
+  g.fillStyle = '#9dc9ae';
+  g.textAlign = 'center';
+  g.fillText('НАЖМИ НА ИГРОКА  ИЛИ  СТРЕЛКИ + ENTER', VW/2, 552);
+}
+
+function drawRevealScreen(g){
+  g.fillStyle = '#0c1f14';
+  g.fillRect(0,0,VW,VH);
+  drawTitle(g, playerChar.name, 180, 30, '#7fd9ff');
+  drawCharacter(ctx, playerChar, VW/2-150, 420, 6, 0, 0, false);
+  drawTitle(g, 'VS', 300, 40, '#ffe14d');
+  drawTitle(g, cpuChar.name, 220, 30, '#ff8f8f');
+  drawCharacter(ctx, cpuChar, VW/2+150, 420, 6, 0, 0, true);
+}
+
+function drawCountdownScreen(g){
+  drawScaledCourt(g);
+  const n = Math.max(0, 3 - Math.floor(stateTimer));
+  drawTitle(g, n > 0 ? String(n) : 'GO!', VH/2, 70, '#ffe14d');
+}
+
+function drawScaledCourt(g){
+  g.save();
+  g.scale(SCALE, SCALE);
+  drawCourt(g);
+  drawCharacter(ctx, playerChar, player.x, player.y, 2.2, Math.round(player.anim), player.swing, false);
+  drawCharacter(ctx, cpuChar, cpu.x, cpu.y, 2.2, Math.round(cpu.anim), cpu.swing, true);
+  drawBall(g);
+  g.restore();
+}
+
+function drawPlayingScreen(g){
+  drawScaledCourt(g);
+  drawHUD(g);
+}
+
+function drawPausedScreen(g){
+  drawScaledCourt(g);
+  drawHUD(g);
+  g.fillStyle = 'rgba(0,0,0,0.6)';
+  g.fillRect(0, 0, VW, VH);
+  const blink = Math.sin(stateTimer*4) > 0;
+  drawTitle(g, 'PAUSE', VH/2-60, 54, blink ? '#ffe14d' : '#c9a800');
+  drawButton(g, PAUSE_RESUME_BUTTON, 'ПРОДОЛЖИТЬ   (P)', 18);
+  drawButton(g, PAUSE_QUIT_BUTTON,   'ВЫЙТИ В МЕНЮ   (Q)', 18);
+}
+
+function drawPointScreen(g){
+  drawScaledCourt(g);
+  drawHUD(g);
+  g.fillStyle = 'rgba(0,0,0,0.35)';
+  g.fillRect(0, VH/2-50, VW, 100);
+  drawTitle(g, pointMessage, VH/2+14, 50, lastPointWinner==='player' ? '#7fffb0' : '#ff8f8f');
+}
+
+function drawGameOverScreen(g){
+  const won = matchWinner === 'player';
+  g.fillStyle = won ? '#0d2418' : '#1a1012';
+  g.fillRect(0,0,VW,VH);
+
+  if (won) drawFireworks(g);
+
+  const hop = won ? Math.abs(Math.sin(stateTimer*4)) * 10 : 0;
+  drawCharacter(g, won ? playerChar : cpuChar, VW/2, 452 - hop, 8,
+                Math.floor(stateTimer*4)%2, 0, false, true);
+
+  drawTitle(g, (won ? playerChar.name : cpuChar.name) + ' WINS!', 74, 38, won ? '#7fffb0' : '#ff8f8f');
+  drawTitle(g, won ? 'YOU MADE IT!' : 'NEXT TIME, BUDDY', 116, 30, won ? '#ffe14d' : '#c9a0a0');
+
+  g.font = '16px "Courier New", monospace';
+  g.fillStyle = '#e8f2ec';
+  g.textAlign = 'center';
+  g.fillText('СЧЁТ ПО ГЕЙМАМ:  ' + score.playerGames + ' - ' + score.cpuGames, VW/2, 504);
+  g.fillText('НАЖМИ НА ЭКРАН ИЛИ ENTER – ИГРАТЬ СНОВА', VW/2, 540);
+}
+
+function render(){
+  ctx.clearRect(0,0,VW,VH);
+  if (state === STATE.GENDER) drawGenderScreen(ctx);
+  else if (state === STATE.SELECT_PLAYER) {
+    drawRosterScreen(ctx, roster, selPlayerIndex, 'ТВОЙ ИГРОК',
+      chosenGender === 'f' ? 'ЖЕНСКИЙ ТУРНИР  –  ЗА КОГО ИГРАЕШЬ?' : 'МУЖСКОЙ ТУРНИР  –  ЗА КОГО ИГРАЕШЬ?');
+  }
+  else if (state === STATE.SELECT_OPPONENT) {
+    drawRosterScreen(ctx, oppPool, selOppIndex, 'СОПЕРНИК', 'ТЫ: ' + playerChar.name + '  –  ПРОТИВ КОГО ИГРАЕШЬ?');
+  }
+  else if (state === STATE.REVEAL) drawRevealScreen(ctx);
+  else if (state === STATE.COUNTDOWN) drawCountdownScreen(ctx);
+  else if (state === STATE.PLAYING) drawPlayingScreen(ctx);
+  else if (state === STATE.PAUSED) drawPausedScreen(ctx);
+  else if (state === STATE.POINT) drawPointScreen(ctx);
+  else if (state === STATE.GAMEOVER) drawGameOverScreen(ctx);
+}
+
+// ============================================================
+//  MAIN LOOP
+// ============================================================
+let lastT = performance.now();
+function loop(t){
+  const dt = Math.min(0.05, (t - lastT) / 1000);
+  lastT = t;
+  update(dt);
+  render();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+})();
+</script>
+</body>
+</html>
