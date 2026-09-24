@@ -229,12 +229,32 @@
 </section>
 
 <section id="cta" class="section section--alt">
-  <div class="wrap"></div>
+  <div class="wrap">
+    <h2>Пришлём, когда будет готово</h2>
+    <p>Оставьте контакт — напишем, как только первая процедура будет готова к использованию.</p>
+    <form class="cta-form" id="cta-form">
+      <input type="email" id="cta-contact" name="contact" placeholder="Ваш email" required>
+      <button type="submit" class="btn">Пришлите, когда будет готово</button>
+    </form>
+  </div>
 </section>
 
 <footer class="site-footer">
-  <div class="wrap"></div>
+  <div class="wrap">
+    <p>Обезличенный проект без готовых консультаций. Реальные данные компаний и контрагентов в материалах не используются.</p>
+  </div>
 </footer>
+
+<script>
+  document.getElementById('cta-form').addEventListener('submit', function (event) {
+    event.preventDefault();
+    var contact = document.getElementById('cta-contact').value.trim();
+    if (!contact) return;
+    var subject = encodeURIComponent('Заявка с лендинга «Мозг бухгалтерии»');
+    var body = encodeURIComponent('Мой контакт для связи: ' + contact);
+    window.location.href = 'mailto:rpw4dzvs8g@privaterelay.appleid.com?subject=' + subject + '&body=' + body;
+  });
+</script>
 
 </body>
 </html>
