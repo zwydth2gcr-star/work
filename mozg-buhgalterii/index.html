@@ -20,6 +20,7 @@
     --ink: #000000;
     --canvas: #ffffff;
     --hairline: #e6e6e6;
+    --hairline-soft: #f1f1f1;
     --surface-soft: #f7f7f5;
     --block-lime: #dceeb1;
     --block-cream: #f4ecd6;
@@ -160,6 +161,93 @@
     border: 1px solid var(--hairline);
   }
 
+  .card-link {
+    display: block;
+    margin-bottom: var(--space-sm);
+    font-size: 16px;
+    font-weight: 480;
+    color: var(--ink);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .caption {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    margin-bottom: var(--space-xs);
+  }
+
+  .io-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-lg);
+    margin-top: var(--space-xl);
+  }
+  .io-item { border-top: 1px solid var(--ink); padding-top: var(--space-md); }
+  .io-item p { margin: 0; font-size: 16px; font-weight: 330; letter-spacing: -0.14px; }
+
+  .sheet {
+    margin-top: var(--space-xxl);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+  }
+  .sheet-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-xs) var(--space-lg);
+    margin-bottom: var(--space-md);
+  }
+  .sheet-head h3 { margin: 0; font-size: 24px; font-weight: 700; line-height: 1.45; letter-spacing: 0; }
+  .sheet-summary { margin: 0; font-size: 16px; font-weight: 330; letter-spacing: -0.14px; }
+
+  .table-scroll { overflow-x: auto; }
+  .table-scroll:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  .recon {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+    font-size: 16px;
+    font-weight: 330;
+    letter-spacing: -0.14px;
+  }
+  .recon th, .recon td { padding: var(--space-sm) var(--space-md); text-align: left; vertical-align: top; }
+  .recon th:first-child, .recon td:first-child { padding-left: 0; }
+  .recon th:last-child, .recon td:last-child { padding-right: 0; }
+  .recon th {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    vertical-align: bottom;
+    border-bottom: 1px solid var(--ink);
+  }
+  .recon td { border-bottom: 1px solid var(--hairline-soft); }
+  .recon td:first-child { white-space: nowrap; }
+  .recon .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .recon .diff { font-weight: 540; }
+  .recon tfoot td { border-bottom: 0; border-top: 1px solid var(--ink); font-weight: 540; }
+
+  .letter {
+    margin-top: var(--space-lg);
+    background: var(--surface-soft);
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+    font-size: 16px;
+    font-weight: 330;
+    letter-spacing: -0.14px;
+  }
+  .letter p:last-child { margin-bottom: 0; }
+  .letter ol { margin: 0 0 1em; padding-left: 20px; }
+  .letter li { margin-bottom: var(--space-xs); }
+
   .steps { padding-left: 20px; margin: 0; }
   .steps li { margin-bottom: var(--space-sm); font-size: 20px; font-weight: 330; line-height: 1.4; letter-spacing: -0.14px; }
 
@@ -230,6 +318,8 @@
     .display-xl { font-size: 48px; letter-spacing: -0.96px; }
     .display-lg { font-size: 36px; letter-spacing: -0.5px; }
     .procedures-grid { grid-template-columns: 1fr; }
+    .io-grid { grid-template-columns: 1fr; gap: var(--space-md); }
+    .sheet { padding: var(--space-md); }
     .cta-form { flex-direction: column; }
     .cta-form input { flex: 0 0 auto; }
     .section { padding-block: var(--space-xxl); }
@@ -272,7 +362,8 @@
       </article>
       <article class="procedure-card">
         <h3>Сверка с контрагентами</h3>
-        <p>Как сопоставить данные учёта с данными контрагента и собрать расхождения.</p>
+        <p>Сопоставит ваш учёт с актом контрагента и покажет, где и почему расходятся суммы.</p>
+        <a class="card-link" href="#example">Посмотреть пример</a>
         <span class="badge">В разработке</span>
       </article>
       <article class="procedure-card">
@@ -287,6 +378,91 @@
       </article>
     </div>
     <p class="body-lg" style="margin-top: var(--space-lg)">Список пополняется — дальше ещё 1–3 процедуры, отталкиваясь от того, что чаще всего просят.</p>
+  </div>
+</section>
+
+<section id="example" class="section" aria-labelledby="example-title">
+  <div class="wrap">
+    <h2 class="display-lg" id="example-title">Как выглядит сверка</h2>
+    <p class="body-lg">Пример результата процедуры «Сверка с контрагентами». Компания, документы и суммы выдуманы.</p>
+
+    <div class="io-grid">
+      <div class="io-item">
+        <span class="caption">На входе</span>
+        <p>Оборотно-сальдовая ведомость по счёту 60 из 1С и акт сверки, который прислал контрагент (Excel или PDF).</p>
+      </div>
+      <div class="io-item">
+        <span class="caption">Результат</span>
+        <p>Таблица расхождений с вероятной причиной каждого и черновик письма контрагенту.</p>
+      </div>
+      <div class="io-item">
+        <span class="caption">Решаете вы</span>
+        <p>Какие расхождения принять, что исправить в учёте и отправлять ли письмо. Агент ничего не проводит и не отправляет сам.</p>
+      </div>
+    </div>
+
+    <div class="sheet">
+      <div class="sheet-head">
+        <h3>ООО «Условный поставщик», 3 квартал 2026</h3>
+        <p class="sheet-summary">Сверено 42 документа: 39 совпали, 3 расходятся</p>
+      </div>
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Таблица расхождений">
+        <table class="recon">
+          <thead>
+            <tr>
+              <th scope="col">Документ</th>
+              <th scope="col" class="num">По нашим данным</th>
+              <th scope="col" class="num">По данным контрагента</th>
+              <th scope="col" class="num">Разница</th>
+              <th scope="col">Вероятная причина</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>ТН № 1162 от 18.09.2026</td>
+              <td class="num">8&nbsp;750,00</td>
+              <td class="num">—</td>
+              <td class="num diff">8&nbsp;750,00</td>
+              <td>Нет в акте контрагента: документ не отражён у них или не дошёл</td>
+            </tr>
+            <tr>
+              <td>ТН № 1170 от 30.09.2026</td>
+              <td class="num">15&nbsp;000,00</td>
+              <td class="num">—</td>
+              <td class="num diff">15&nbsp;000,00</td>
+              <td>Последний день квартала: вероятно, у контрагента документ попал в октябрь</td>
+            </tr>
+            <tr>
+              <td>ТН № 1175 от 27.09.2026</td>
+              <td class="num">4&nbsp;320,00</td>
+              <td class="num">4&nbsp;230,00</td>
+              <td class="num diff">90,00</td>
+              <td>Разница 90 делится на 9: похоже на перестановку цифр (4&nbsp;320 и 4&nbsp;230) в одной из учётных систем</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>Сальдо на 30.09.2026</td>
+              <td class="num">187&nbsp;540,00</td>
+              <td class="num">163&nbsp;700,00</td>
+              <td class="num">23&nbsp;840,00</td>
+              <td>Три расхождения объясняют всю разницу</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="letter">
+        <span class="caption">Черновик письма контрагенту</span>
+        <p>Добрый день! Сверили взаиморасчёты за 3 квартал 2026 года. По нашим данным сальдо на 30.09.2026 — 187&nbsp;540,00&nbsp;руб., по вашему акту — 163&nbsp;700,00&nbsp;руб. Разница 23&nbsp;840,00&nbsp;руб. складывается из трёх позиций:</p>
+        <ol>
+          <li>ТН № 1162 от 18.09.2026 на 8&nbsp;750,00&nbsp;руб. в вашем акте не отражена.</li>
+          <li>ТН № 1170 от 30.09.2026 на 15&nbsp;000,00&nbsp;руб. в акте отсутствует — возможно, у вас она отражена в октябре.</li>
+          <li>ТН № 1175 от 27.09.2026: у нас 4&nbsp;320,00&nbsp;руб., у вас 4&nbsp;230,00&nbsp;руб. Просим сверить с первичным документом.</li>
+        </ol>
+        <p>Просим проверить эти позиции и прислать исправленный акт или ваши комментарии.</p>
+      </div>
+    </div>
   </div>
 </section>
 
