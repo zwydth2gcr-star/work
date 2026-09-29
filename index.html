@@ -12,6 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script>document.documentElement.className += ' js';</script>
 <style>
   :root {
     color-scheme: light;
@@ -25,6 +26,7 @@
     --block-lime: #dceeb1;
     --block-cream: #f4ecd6;
     --error: #c0392b;
+    --success: #1ea64a;
 
     --radius-xs: 2px;
     --radius-md: 8px;
@@ -235,7 +237,7 @@
   .recon .diff { font-weight: 540; }
   .recon tfoot td { border-bottom: 0; border-top: 1px solid var(--ink); font-weight: 540; }
 
-  .letter {
+  .draft {
     margin-top: var(--space-lg);
     background: var(--surface-soft);
     border-radius: var(--radius-md);
@@ -244,9 +246,59 @@
     font-weight: 330;
     letter-spacing: -0.14px;
   }
-  .letter p:last-child { margin-bottom: 0; }
-  .letter ol { margin: 0 0 1em; padding-left: 20px; }
-  .letter li { margin-bottom: var(--space-xs); }
+  .draft > :last-child { margin-bottom: 0; }
+  .draft ol { margin: 0 0 1em; padding-left: 20px; }
+  .draft li { margin-bottom: var(--space-xs); }
+
+  .tabs { display: none; }
+  .js .tabs {
+    position: relative;
+    display: flex;
+    gap: 4px;
+    width: fit-content;
+    max-width: 100%;
+    margin-top: var(--space-xl);
+    padding: 4px;
+    background: var(--surface-soft);
+    border-radius: var(--radius-pill);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabs [role="tab"] {
+    flex: 0 0 auto;
+    font-family: var(--font-sans);
+    font-size: 20px;
+    font-weight: 480;
+    line-height: 1.4;
+    letter-spacing: -0.1px;
+    padding: 8px 18px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .tabs [role="tab"]:hover:not([aria-selected="true"]) { background: var(--hairline); }
+  .tabs [role="tab"][aria-selected="true"] { background: var(--primary); color: var(--on-primary); }
+  .tabs [role="tab"]:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  .js .panel:not(.is-active) { display: none; }
+  html:not(.js) .panel + .panel { margin-top: var(--space-section); }
+
+  .status { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-weight: 540; }
+  .glyph {
+    display: inline-grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--on-primary);
+  }
+  .status-ok .glyph { background: var(--success); }
+  .status-warn .glyph { background: var(--ink); }
 
   .steps { padding-left: 20px; margin: 0; }
   .steps li { margin-bottom: var(--space-sm); font-size: 20px; font-weight: 330; line-height: 1.4; letter-spacing: -0.14px; }
@@ -319,6 +371,7 @@
     .display-lg { font-size: 36px; letter-spacing: -0.5px; }
     .procedures-grid { grid-template-columns: 1fr; }
     .io-grid { grid-template-columns: 1fr; gap: var(--space-md); }
+    .tabs [role="tab"] { font-size: 16px; padding: 8px 14px; }
     .sheet { padding: var(--space-md); }
     .cta-form { flex-direction: column; }
     .cta-form input { flex: 0 0 auto; }
@@ -357,23 +410,26 @@
     <div class="procedures-grid">
       <article class="procedure-card">
         <h3>Закрытие месяца</h3>
-        <p>Пошаговая инструкция для агента: как подготовить и проверить закрытие периода.</p>
+        <p>Пройдёт по вашему чек-листу закрытия и покажет, что не закрыто и почему.</p>
+        <a class="card-link" href="#example-close">Посмотреть пример</a>
         <span class="badge">В разработке</span>
       </article>
       <article class="procedure-card">
         <h3>Сверка с контрагентами</h3>
         <p>Сопоставит ваш учёт с актом контрагента и покажет, где и почему расходятся суммы.</p>
-        <a class="card-link" href="#example">Посмотреть пример</a>
+        <a class="card-link" href="#example-recon">Посмотреть пример</a>
         <span class="badge">В разработке</span>
       </article>
       <article class="procedure-card">
         <h3>Проверка первички</h3>
-        <p>Что проверять в первичных документах перед сдачей отчётности.</p>
+        <p>Проверит реквизиты, суммы и цены по договору и соберёт реестр замечаний.</p>
+        <a class="card-link" href="#example-docs">Посмотреть пример</a>
         <span class="badge">В разработке</span>
       </article>
       <article class="procedure-card">
         <h3>Подготовка регулярного отчёта</h3>
-        <p>Как собрать повторяющийся отчёт по одному и тому же шаблону.</p>
+        <p>Заполнит ваш шаблон по свежей выгрузке и прокомментирует, что изменилось за период.</p>
+        <a class="card-link" href="#example-report">Посмотреть пример</a>
         <span class="badge">В разработке</span>
       </article>
     </div>
@@ -383,9 +439,93 @@
 
 <section id="example" class="section" aria-labelledby="example-title">
   <div class="wrap">
-    <h2 class="display-lg" id="example-title">Как выглядит сверка</h2>
-    <p class="body-lg">Пример результата процедуры «Сверка с контрагентами». Компания, документы и суммы выдуманы.</p>
+    <h2 class="display-lg" id="example-title">Как выглядит результат</h2>
+    <p class="body-lg">Примеры на выдуманных данных: компании, документы и суммы придуманы.</p>
 
+    <div class="tabs" role="tablist" aria-label="Примеры процедур">
+      <button type="button" role="tab" id="tab-close" aria-controls="example-close" aria-selected="false" tabindex="-1">Закрытие месяца</button>
+      <button type="button" role="tab" id="tab-recon" aria-controls="example-recon" aria-selected="true">Сверка с контрагентами</button>
+      <button type="button" role="tab" id="tab-docs" aria-controls="example-docs" aria-selected="false" tabindex="-1">Проверка первички</button>
+      <button type="button" role="tab" id="tab-report" aria-controls="example-report" aria-selected="false" tabindex="-1">Регулярный отчёт</button>
+    </div>
+
+    <div class="panel" id="example-close" role="tabpanel" aria-labelledby="tab-close">
+    <div class="io-grid">
+      <div class="io-item">
+        <span class="caption">На входе</span>
+        <p>Оборотно-сальдовая ведомость за месяц из 1С и ваш чек-лист закрытия.</p>
+      </div>
+      <div class="io-item">
+        <span class="caption">Результат</span>
+        <p>Статус по каждому пункту чек-листа с объяснением и черновик корректирующих проводок.</p>
+      </div>
+      <div class="io-item">
+        <span class="caption">Решаете вы</span>
+        <p>Какие проводки делать и в каком виде. Агент ничего не проводит в 1С сам.</p>
+      </div>
+    </div>
+
+    <div class="sheet">
+      <div class="sheet-head">
+        <h3>Закрытие сентября 2026</h3>
+        <p class="sheet-summary">Проверено 12 пунктов чек-листа: 9 выполнено, 3 требуют внимания</p>
+      </div>
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Статус пунктов чек-листа">
+        <table class="recon">
+          <thead>
+            <tr>
+              <th scope="col">Пункт чек-листа</th>
+              <th scope="col">Статус</th>
+              <th scope="col">Что нашёл агент</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Амортизация начислена</td>
+              <td><span class="status status-warn"><span class="glyph" aria-hidden="true">!</span>Требует внимания</span></td>
+              <td>Ноутбук, инв. № 0142, введён в эксплуатацию в августе, но за сентябрь амортизация по нему не начислена</td>
+            </tr>
+            <tr>
+              <td>Валютные остатки переоценены</td>
+              <td><span class="status status-warn"><span class="glyph" aria-hidden="true">!</span>Требует внимания</span></td>
+              <td>На счёте 52 остаток 3&nbsp;200,00&nbsp;USD, переоценка на 30.09 не проведена</td>
+            </tr>
+            <tr>
+              <td>Авансы зачтены</td>
+              <td><span class="status status-warn"><span class="glyph" aria-hidden="true">!</span>Требует внимания</span></td>
+              <td>По счёту 62 у ООО «Условный покупатель» одновременно дебетовое и кредитовое сальдо 12&nbsp;400,00: похоже, полученный аванс не зачтён</td>
+            </tr>
+            <tr>
+              <td>Выписки банка загружены по 30.09</td>
+              <td><span class="status status-ok"><span class="glyph" aria-hidden="true">✓</span>Выполнено</span></td>
+              <td>Остаток по счёту 51 совпадает с выпиской</td>
+            </tr>
+            <tr>
+              <td>Касса сверена</td>
+              <td><span class="status status-ok"><span class="glyph" aria-hidden="true">✓</span>Выполнено</span></td>
+              <td>Остаток по счёту 50 на 30.09 совпадает с кассовой книгой</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3">Ещё 7 пунктов чек-листа выполнены</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="draft">
+        <span class="caption">Черновик корректировок</span>
+        <ol>
+          <li>Дт 26 Кт 02 — 83,33&nbsp;руб.: амортизация ноутбука за сентябрь (3&nbsp;000,00&nbsp;руб. ÷ 36 мес.).</li>
+          <li>Дт 62 (авансы полученные) Кт 62 (расчёты с покупателями) — 12&nbsp;400,00&nbsp;руб.: зачёт аванса ООО «Условный покупатель».</li>
+          <li>Переоценка 3&nbsp;200,00&nbsp;USD на счёте 52: сумму нужно рассчитать по официальному курсу на 30.09. Курс агент сам не подставляет.</li>
+        </ol>
+      </div>
+    </div>
+    </div>
+
+    <div class="panel is-active" id="example-recon" role="tabpanel" aria-labelledby="tab-recon">
     <div class="io-grid">
       <div class="io-item">
         <span class="caption">На входе</span>
@@ -452,7 +592,7 @@
         </table>
       </div>
 
-      <div class="letter">
+      <div class="draft">
         <span class="caption">Черновик письма контрагенту</span>
         <p>Добрый день! Сверили взаиморасчёты за 3 квартал 2026 года. По нашим данным сальдо на 30.09.2026 — 187&nbsp;540,00&nbsp;руб., по вашему акту — 163&nbsp;700,00&nbsp;руб. Разница 23&nbsp;840,00&nbsp;руб. складывается из трёх позиций:</p>
         <ol>
@@ -462,6 +602,142 @@
         </ol>
         <p>Просим проверить эти позиции и прислать исправленный акт или ваши комментарии.</p>
       </div>
+    </div>
+    </div>
+
+    <div class="panel" id="example-docs" role="tabpanel" aria-labelledby="tab-docs">
+    <div class="io-grid">
+      <div class="io-item">
+        <span class="caption">На входе</span>
+        <p>PDF или сканы первичных документов за период и договоры с контрагентами. Нечёткие сканы агент помечает для ручной проверки.</p>
+      </div>
+      <div class="io-item">
+        <span class="caption">Результат</span>
+        <p>Реестр документов с замечаниями: реквизиты, подписи, суммы, соответствие условиям договора.</p>
+      </div>
+      <div class="io-item">
+        <span class="caption">Решаете вы</span>
+        <p>Какие документы принять, а какие вернуть на исправление. Агент не меняет документы и не пишет контрагентам сам.</p>
+      </div>
+    </div>
+
+    <div class="sheet">
+      <div class="sheet-head">
+        <h3>Первичные документы за сентябрь 2026</h3>
+        <p class="sheet-summary">Проверено 27 документов: 24 без замечаний, 3 с замечаниями</p>
+      </div>
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Реестр замечаний по документам">
+        <table class="recon">
+          <thead>
+            <tr>
+              <th scope="col">Документ</th>
+              <th scope="col">Контрагент</th>
+              <th scope="col">Замечание</th>
+              <th scope="col">Что сделать</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>ТН № 2208 от 12.09.2026</td>
+              <td>ООО «Условный поставщик»</td>
+              <td>Сумма прописью «двенадцать тысяч четыреста рублей» не совпадает с суммой цифрами 12&nbsp;040,00</td>
+              <td>Запросить исправленный документ</td>
+            </tr>
+            <tr>
+              <td>Акт № 57 от 19.09.2026</td>
+              <td>ИП Условнов А.&nbsp;Б.</td>
+              <td>Нет подписи исполнителя</td>
+              <td>Вернуть на подпись</td>
+            </tr>
+            <tr>
+              <td>ТН № 2231 от 25.09.2026</td>
+              <td>ООО «Условный поставщик»</td>
+              <td>Цена 18,50 за шт., в договоре № 14/2026 — 17,50. На 400&nbsp;шт. это 400,00 сверх договора</td>
+              <td>Проверить допсоглашения или уточнить цену у поставщика</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="4">Остальные 24 документа без замечаний</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+    </div>
+
+    <div class="panel" id="example-report" role="tabpanel" aria-labelledby="tab-report">
+    <div class="io-grid">
+      <div class="io-item">
+        <span class="caption">На входе</span>
+        <p>Анализ счёта 62 за месяц из 1С и ваш шаблон отчёта в Excel.</p>
+      </div>
+      <div class="io-item">
+        <span class="caption">Результат</span>
+        <p>Заполненный отчёт и черновик комментария: что изменилось за месяц и на что обратить внимание.</p>
+      </div>
+      <div class="io-item">
+        <span class="caption">Решаете вы</span>
+        <p>Верны ли выводы и отправлять ли отчёт. Цифры агент берёт только из выгрузки.</p>
+      </div>
+    </div>
+
+    <div class="sheet">
+      <div class="sheet-head">
+        <h3>Дебиторская задолженность на 30.09.2026</h3>
+        <p class="sheet-summary">Ежемесячный отчёт для руководителя по вашему шаблону</p>
+      </div>
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Отчёт по дебиторской задолженности">
+        <table class="recon">
+          <thead>
+            <tr>
+              <th scope="col">Покупатель</th>
+              <th scope="col" class="num">На 31.08.2026</th>
+              <th scope="col" class="num">На 30.09.2026</th>
+              <th scope="col" class="num">Изменение</th>
+              <th scope="col" class="num">Просрочка более 30 дней</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>ООО «Условная сеть»</td>
+              <td class="num">72&nbsp;900,00</td>
+              <td class="num">96&nbsp;300,00</td>
+              <td class="num diff">+23&nbsp;400,00</td>
+              <td class="num">18&nbsp;500,00</td>
+            </tr>
+            <tr>
+              <td>ООО «Условный покупатель»</td>
+              <td class="num">45&nbsp;200,00</td>
+              <td class="num">38&nbsp;600,00</td>
+              <td class="num">−6&nbsp;600,00</td>
+              <td class="num">—</td>
+            </tr>
+            <tr>
+              <td>ООО «Условный дистрибьютор»</td>
+              <td class="num">27&nbsp;400,00</td>
+              <td class="num">27&nbsp;400,00</td>
+              <td class="num">0,00</td>
+              <td class="num diff">27&nbsp;400,00</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>Итого</td>
+              <td class="num">145&nbsp;500,00</td>
+              <td class="num">162&nbsp;300,00</td>
+              <td class="num">+16&nbsp;800,00</td>
+              <td class="num">45&nbsp;900,00</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="draft">
+        <span class="caption">Черновик комментария для руководителя</span>
+        <p>За сентябрь дебиторская задолженность выросла на 16&nbsp;800,00&nbsp;руб. (+11,5&nbsp;%), в основном из-за ООО «Условная сеть» (+23&nbsp;400,00). Просрочка более 30 дней — 45&nbsp;900,00&nbsp;руб. Из неё 27&nbsp;400,00 приходится на ООО «Условный дистрибьютор»: с прошлого отчёта от него не было ни одной оплаты. Стоит связаться с покупателем.</p>
+      </div>
+    </div>
     </div>
   </div>
 </section>
@@ -521,6 +797,62 @@
     <p>Обезличенный проект без готовых консультаций. Реальные данные компаний и контрагентов в материалах не используются.</p>
   </div>
 </footer>
+
+<script>
+  (function () {
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('.tabs [role="tab"]'));
+    var section = document.getElementById('example');
+    if (!tabs.length || !section) return;
+
+    function activate(tab, focus) {
+      tabs.forEach(function (t) {
+        var on = t === tab;
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+        t.tabIndex = on ? 0 : -1;
+        document.getElementById(t.getAttribute('aria-controls')).classList.toggle('is-active', on);
+      });
+      var strip = tab.parentNode;
+      strip.scrollLeft = tab.offsetLeft - (strip.clientWidth - tab.offsetWidth) / 2;
+      if (focus) tab.focus();
+    }
+    function tabFor(panelId) {
+      return tabs.filter(function (t) { return t.getAttribute('aria-controls') === panelId; })[0];
+    }
+    function openFromHash() {
+      var tab = tabFor(location.hash.slice(1));
+      if (!tab) return;
+      activate(tab);
+      section.scrollIntoView();
+    }
+
+    tabs.forEach(function (tab, i) {
+      tab.addEventListener('click', function () { activate(tab); });
+      tab.addEventListener('keydown', function (e) {
+        var next = null;
+        if (e.key === 'ArrowRight') next = tabs[(i + 1) % tabs.length];
+        else if (e.key === 'ArrowLeft') next = tabs[(i - 1 + tabs.length) % tabs.length];
+        else if (e.key === 'Home') next = tabs[0];
+        else if (e.key === 'End') next = tabs[tabs.length - 1];
+        if (next) { e.preventDefault(); activate(next, true); }
+      });
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll('a[href^="#example-"]'), function (link) {
+      link.addEventListener('click', function (e) {
+        var id = link.getAttribute('href').slice(1);
+        var tab = tabFor(id);
+        if (!tab) return;
+        e.preventDefault();
+        activate(tab);
+        history.replaceState(null, '', '#' + id);
+        section.scrollIntoView();
+      });
+    });
+
+    window.addEventListener('hashchange', openFromHash);
+    openFromHash();
+  })();
+</script>
 
 <script>
   (function () {
