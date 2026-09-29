@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Мозг бухгалтерии — процедуры для Claude Code</title>
 <meta name="description" content="Набор процедур для делегирования рутины бухгалтерии агенту в Claude Code.">
+<meta property="og:title" content="Мозг бухгалтерии — процедуры для Claude Code">
+<meta property="og:description" content="Набор процедур для делегирования рутины бухгалтерии агенту в Claude Code.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%274%27 fill=%27%232f5d6b%27/%3E%3C/svg%3E">
 <style>
   :root {
     color-scheme: light dark;
@@ -38,10 +42,12 @@
       --badge-bg: rgba(116, 169, 184, 0.16);
       --badge-ink: #93c3d0;
     }
+    .form-msg.error { color: #ff8a80; }
   }
 
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
   html, body { margin: 0; padding: 0; }
 
   body {
@@ -55,7 +61,7 @@
   h1, h2, h3 { line-height: 1.25; margin: 0 0 0.5em; font-weight: 700; }
   p { margin: 0 0 1em; }
   code {
-    background: var(--surface);
+    background: var(--badge-bg);
     border: 1px solid var(--border);
     border-radius: 4px;
     padding: 1px 6px;
@@ -86,7 +92,7 @@
     display: inline-block;
     background: var(--badge-bg);
     color: var(--badge-ink);
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     padding: 4px 10px;
     border-radius: 999px;
@@ -110,24 +116,28 @@
     padding: 20px;
     box-shadow: 0 1px 2px var(--shadow);
   }
-  .procedure-card h3 { font-size: 17px; margin-bottom: 4px; }
+  .procedure-card h3 { font-size: 17px; margin-bottom: 6px; }
+  .procedure-card p { font-size: 15px; color: var(--muted); margin-bottom: 8px; }
 
   .steps { padding-left: 20px; }
   .steps li { margin-bottom: 12px; }
 
   .faq details {
     border-bottom: 1px solid var(--border);
-    padding: 16px 0;
   }
   .faq summary {
     cursor: pointer;
     font-weight: 600;
     list-style: none;
+    padding: 16px 0;
+    min-height: 48px;
   }
+  .faq details[open] summary { padding-bottom: 0; }
+  .faq details > p { margin-bottom: 0; padding: 12px 0 16px; }
   .faq summary::-webkit-details-marker { display: none; }
   .faq summary::after { content: "+"; float: right; color: var(--muted); }
   .faq details[open] summary::after { content: "\2013"; }
-  .faq p { margin-top: 12px; color: var(--muted); }
+  .faq p { color: var(--muted); }
 
   .cta-form { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
   .cta-form input {
@@ -140,12 +150,27 @@
     font-size: 16px;
   }
   .cta-form input:focus-visible { outline: 2px solid var(--accent); }
+  .cta-form label { flex: 1 1 100%; font-weight: 600; margin-bottom: -4px; }
+  .cta-form input[aria-invalid="true"] { border-color: #c0392b; }
+  .form-msg { margin: 16px 0 0; min-height: 1.65em; }
+  .form-msg.error { color: #b3261e; }
+  .form-msg.ok { color: var(--accent-dark); font-weight: 600; }
+  .form-msg .btn-link {
+    background: none; border: 0; padding: 0; margin-left: 4px; font: inherit;
+    color: var(--accent-dark); text-decoration: underline; cursor: pointer;
+  }
+  .skip-link {
+    position: absolute; left: 8px; top: -60px; z-index: 10;
+    background: var(--accent); color: var(--accent-contrast);
+    padding: 10px 16px; border-radius: var(--radius); text-decoration: none;
+  }
+  .skip-link:focus { top: 8px; }
 
   footer.site-footer {
     padding: 32px 0 48px;
     text-align: center;
     color: var(--muted);
-    font-size: 13px;
+    font-size: 14px;
   }
 
   @media (max-width: 640px) {
@@ -158,6 +183,8 @@
 </style>
 </head>
 <body>
+<a class="skip-link" href="#problem-solution">Перейти к содержимому</a>
+<main>
 
 <section id="hero" class="section hero">
   <div class="wrap">
@@ -181,18 +208,22 @@
     <div class="procedures-grid">
       <article class="procedure-card">
         <h3>Закрытие месяца</h3>
+        <p>Пошаговая инструкция для агента: как подготовить и проверить закрытие периода.</p>
         <span class="badge">В разработке</span>
       </article>
       <article class="procedure-card">
         <h3>Сверка с контрагентами</h3>
+        <p>Как сопоставить данные учёта с данными контрагента и собрать расхождения.</p>
         <span class="badge">В разработке</span>
       </article>
       <article class="procedure-card">
         <h3>Проверка первички</h3>
+        <p>Что проверять в первичных документах перед сдачей отчётности.</p>
         <span class="badge">В разработке</span>
       </article>
       <article class="procedure-card">
         <h3>Подготовка регулярного отчёта</h3>
+        <p>Как собрать повторяющийся отчёт по одному и тому же шаблону.</p>
         <span class="badge">В разработке</span>
       </article>
     </div>
@@ -216,7 +247,7 @@
     <h2>Частые вопросы</h2>
     <details>
       <summary>Это безопасно для данных компании?</summary>
-      <p>Сами процедуры не будут содержать ни одного реального документа, контрагента или цифры — только выдуманные примеры. Вы подключаете свои данные сами, файл их никуда не передаёт.</p>
+      <p>Сами процедуры не будут содержать ни одного реального документа, контрагента или цифры — только выдуманные примеры. Вы подключаете свои данные сами. Сам файл ничего никуда не отправляет, но при работе Claude Code содержимое файлов, с которыми вы работаете, обрабатывается сервисом Anthropic — учитывайте это и не давайте агенту то, что нельзя передавать наружу по правилам компании.</p>
     </details>
     <details>
       <summary>Это готовая консультация или расчёт?</summary>
@@ -233,12 +264,16 @@
   <div class="wrap">
     <h2>Пришлём, когда будет готово</h2>
     <p>Оставьте контакт — напишем, как только первая процедура будет готова к использованию.</p>
-    <form class="cta-form" id="cta-form">
-      <input type="text" id="cta-contact" name="contact" placeholder="Email или @telegram" aria-label="Email или Telegram" required>
+    <form class="cta-form" id="cta-form" novalidate>
+      <label for="cta-contact">Email или Telegram</label>
+      <input type="text" id="cta-contact" name="contact" placeholder="name@company.ru или @username" autocomplete="email" inputmode="email" aria-describedby="form-msg" required>
       <button type="submit" class="btn">Пришлите, когда будет готово</button>
     </form>
+    <p class="form-msg" id="form-msg" role="status" aria-live="polite"></p>
   </div>
 </section>
+
+</main>
 
 <footer class="site-footer">
   <div class="wrap">
@@ -247,14 +282,48 @@
 </footer>
 
 <script>
-  document.getElementById('cta-form').addEventListener('submit', function (event) {
-    event.preventDefault();
-    var contact = document.getElementById('cta-contact').value.trim();
-    if (!contact) return;
-    var subject = encodeURIComponent('Заявка с лендинга «Мозг бухгалтерии»');
-    var body = encodeURIComponent('Мой контакт для связи: ' + contact);
-    window.location.href = 'mailto:rpw4dzvs8g@privaterelay.appleid.com?subject=' + subject + '&body=' + body;
-  });
+  (function () {
+    var TO = 'rpw4dzvs8g@privaterelay.appleid.com';
+    var form = document.getElementById('cta-form');
+    var input = document.getElementById('cta-contact');
+    var msg = document.getElementById('form-msg');
+
+    function show(text, kind) {
+      msg.className = 'form-msg ' + (kind || '');
+      msg.textContent = text;
+    }
+    function valid(v) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v) || /^@?[A-Za-z0-9_]{5,32}$/.test(v);
+    }
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      var contact = input.value.trim();
+      if (!valid(contact)) {
+        input.setAttribute('aria-invalid', 'true');
+        show('Проверьте контакт: нужен email (name@company.ru) или Telegram (@username).', 'error');
+        input.focus();
+        return;
+      }
+      input.removeAttribute('aria-invalid');
+      var subject = encodeURIComponent('Заявка с лендинга «Мозг бухгалтерии»');
+      var body = encodeURIComponent('Мой контакт для связи: ' + contact);
+      window.location.href = 'mailto:' + TO + '?subject=' + subject + '&body=' + body;
+
+      // если почтовое приложение не открылось — даём запасной путь
+      show('Открываем почту, чтобы отправить заявку. Если ничего не открылось — напишите нам на ' + TO + ' или ', 'ok');
+      var copy = document.createElement('button');
+      copy.type = 'button';
+      copy.className = 'btn-link';
+      copy.textContent = 'скопируйте адрес';
+      copy.addEventListener('click', function () {
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(TO).then(function () { copy.textContent = 'адрес скопирован'; });
+        }
+      });
+      msg.appendChild(copy);
+    });
+  })();
 </script>
 
 </body>
